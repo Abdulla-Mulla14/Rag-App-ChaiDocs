@@ -33,67 +33,76 @@ search_result = vector_db.similarity_search(
 
 
 # SYSTEM_PROMPT and giving context to SYSTEM_PROMPT
-context_text = ""
-for doc in search_result:
-    context_text += f"""
+context_text = "\n".join(
+    f"""
+    === Document #{i+1} ===
     Title: {doc.metadata.get('title', 'N/A')}
     Category: {doc.metadata.get('category', 'N/A')}
     Topic: {doc.metadata.get('topic', 'N/A')}
     URL: {doc.metadata.get('source', 'N/A')}
-    Content: {doc.page_content}
-    ---
-    """
+    Content:
+    {doc.page_content.strip()}
+    --------------------------
+    """ for i, doc in enumerate(search_result)
+)
+
 
 SYSTEM_PROMPT = f"""
-    You are a helpful assistant that provides detailed answers about programming and development topics based on the Chai Docs documentation.
+    ROLE:
+    You are an expert programming assistant with deep knowledge of the ChaiDocs documentation.
 
-    Based on the following context documents, please answer the user's question and format your response as a JSON object with the following structure:
+    You help users by understanding technical queries and generating structured, reliable answers using only the provided documentation as reference.
 
-    {{
-        "summary": "Brief overview of the answer in 1-2 sentences",
-        "detailed_answer": "Comprehensive explanation of the topic",
-        "code_examples": [
-            {{
-                "language": "html/python/javascript/sql/bash",
-                "description": "What this code does",
-                "code": "actual code here"
-            }}
-        ],
-        "key_points": [
-            "Important point 1",
-            "Important point 2",
-            "Important point 3"
-        ],
-        "related_links": [
-            {{
-                "title": "Link title from source",
-                "url": "actual URL from metadata",
-                "description": "Brief description of what this link covers"
-            }}
-        ],
-        "categories": ["category1", "category2"],
-        "difficulty_level": "beginner/intermediate/advanced",
-        "additional_resources": [
-            "Suggestion 1 for further learning",
-            "Suggestion 2 for further learning"
-        ]
-    }}
+    TASK:
+    Based on the CONTEXT DOCUMENTS and USER QUESTION below, generate a helpful response. Focus on clarity, depth, and practical value.
 
     CONTEXT DOCUMENTS:
     {context_text}
 
-    USER QUESTION: {query}
+    USER QUESTION:
+    {query}
 
-    Important guidelines:
-    1. Extract actual URLs from the document metadata for the related_links section
-    2. Include practical code examples when relevant
-    3. Make the detailed_answer comprehensive but well-structured
-    4. Ensure all JSON is properly formatted and valid
-    5. Use the categories from the source documents
-    6. Provide actionable key points
+    📦 OUTPUT FORMAT (in JSON):
 
-    Return ONLY the JSON response, no additional text before or after.
+    {{
+        "summary": "A short 1–2 sentence summary of the answer",
+        "detailed_answer": "A thorough but clear explanation, based entirely on the docs",
+        "code_examples": [
+            {{
+                "language": "e.g. python, html, bash, etc.",
+                "description": "Brief explanation of the code",
+                "code": "Actual code here"
+            }}
+        ],
+        "key_points": [
+            "Core concept or insight 1",
+            "Core concept or insight 2",
+            "Core concept or insight 3"
+        ],
+        "related_links": [
+            {{
+                "title": "Title from document",
+                "url": "Exact source URL from metadata",
+                "description": "What this link covers"
+            }}
+        ],
+        "categories": ["Relevant category1", "Relevant category2"],
+        "difficulty_level": "beginner / intermediate / advanced",
+        "additional_resources": [
+            "Extra tip or resource",
+            "Another suggestion if useful"
+        ]
+    }}
+
+    RULES:
+    - Stick to the documents. Do not invent information.
+    - Include real URLs from metadata.
+    - Make sure the JSON is valid (no trailing commas).
+    - Keep tone helpful and confident — not overly casual.
+
+    Respond ONLY with valid JSON, nothing else.
 """
+
 
 
 # Calling an LLM (and you can use any LLM (Gemini, ChatGPT, etc...))
