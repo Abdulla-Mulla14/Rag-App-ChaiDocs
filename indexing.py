@@ -7,8 +7,6 @@ import os
 
 load_dotenv()
 
-print("API Key Loaded:", os.getenv("OPENAI_API_KEY"))
-
 # Load and chunk web content
 loader = WebBaseLoader([
             'https://chaidocs.vercel.app/youtube/chai-aur-html/introduction/',
